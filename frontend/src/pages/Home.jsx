@@ -11,7 +11,7 @@ const Home = () => {
       </p>
       <div className="flex space-x-4">
         <Link to="/login" className="btn btn-primary">Se connecter</Link>
-        <Link to="/signup" className="btn btn-secondary">S'inscrire</Link>
+        <Link to="/signup" className="btn btn-secondary">S&apos;inscrire</Link>
       </div>
     </div>
   );

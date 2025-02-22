@@ -2,11 +2,12 @@
 
 ## 🚀 Description du Projet
 **LegiChain** est une plateforme permettant de **vérifier, authentifier et sécuriser des objets** via la blockchain.  
-Grâce à l'intégration de **Supabase pour l'authentification**, les utilisateurs peuvent **s'inscrire, se connecter et gérer leur compte** de manière sécurisée.
+Grâce à **Supabase et MetaMask**, les utilisateurs peuvent **s'inscrire, se connecter et gérer leur compte** de manière sécurisée.
 
 ## 🛠️ Technologies Utilisées
 - **Frontend :** React + Vite + Tailwind CSS
 - **Backend :** Supabase (Auth + Database)
+- **Web3 :** ethers.js + MetaMask
 - **Déploiement :** Vite + Netlify (à venir)
 
 ---

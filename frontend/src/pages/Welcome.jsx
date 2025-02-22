@@ -1,10 +1,9 @@
 import { useEffect, useState } from "react";
 import { getUser, logout } from "../api/api";
-import { useNavigate } from "react-router-dom";
+import { useNavigate, Link } from "react-router-dom";
 
 const Welcome = () => {
   const [username, setUsername] = useState("");
-  const [walletAddress, setWalletAddress] = useState("");
   const [loading, setLoading] = useState(true);
   const navigate = useNavigate();
 
@@ -12,17 +11,19 @@ const Welcome = () => {
     const fetchUser = async () => {
       setLoading(true);
 
-      // Récupérer l'utilisateur connecté
       const user = await getUser();
       console.log("Utilisateur récupéré :", user);
 
       if (user) {
-        setUsername(user.email || "Utilisateur");
+        if (user.wallet_address) {
+          setUsername(user.username || `Wallet: ${user.wallet_address.substring(0, 6)}...`);
+        } else {
+          setUsername(user.username || user.email || "Utilisateur");
+        }
       } else {
-        // Vérifier si un wallet est stocké en local (MetaMask)
         const storedWallet = localStorage.getItem("walletAddress");
         if (storedWallet) {
-          setWalletAddress(storedWallet);
+          setUsername(`Wallet: ${storedWallet.substring(0, 6)}...`);
         } else {
           navigate("/login");
         }
@@ -34,7 +35,6 @@ const Welcome = () => {
     fetchUser();
   }, [navigate]);
 
-  // Déconnexion de l'utilisateur
   const handleLogout = async () => {
     await logout();
     localStorage.removeItem("walletAddress");
@@ -42,31 +42,31 @@ const Welcome = () => {
   };
 
   return (
-    <div className="flex flex-col items-center justify-center h-screen text-center bg-gray-900 text-white">
-      {loading ? (
-        <h1 className="text-3xl font-bold">Chargement...</h1>
-      ) : (
-        <>
+    <div className="h-screen bg-gray-900 text-white">
+      {/* Navbar */}
+      <nav className="bg-gray-800 p-4 flex justify-between items-center">
+        <h1 className="text-xl font-bold">LegiChain</h1>
+        <div className="flex items-center space-x-4">
+          <span className="text-gray-300">{username}</span>
+          <Link to="/profile" className="px-3 py-1 bg-blue-600 hover:bg-blue-700 rounded-lg">Profil</Link>
+          <button 
+            onClick={handleLogout} 
+            className="px-3 py-1 bg-red-600 hover:bg-red-700 rounded-lg">
+            Déconnexion
+          </button>
+        </div>
+      </nav>
+
+      {/* Contenu principal */}
+      <div className="flex flex-col items-center justify-center h-full text-center">
+        {loading ? (
+          <h1 className="text-3xl font-bold">Chargement...</h1>
+        ) : (
           <h1 className="text-4xl font-extrabold">
-            🎉 Bienvenue sur LegiChain, {walletAddress ? `Wallet: ${walletAddress}` : username} !
+            🎉 Bienvenue sur LegiChain, {username} !
           </h1>
-          <p className="text-lg text-gray-300 mt-2">
-            Vous êtes connecté avec {walletAddress ? "MetaMask" : "un compte email/Twitter/Google"}.
-          </p>
-          <div className="mt-6 flex space-x-4">
-            <button 
-              onClick={() => navigate("/")} 
-              className="px-4 py-2 bg-blue-600 hover:bg-blue-700 text-white font-semibold rounded-lg transition duration-300">
-              Retour à l&apos;accueil
-            </button>
-            <button 
-              onClick={handleLogout} 
-              className="px-4 py-2 bg-red-600 hover:bg-red-700 text-white font-semibold rounded-lg transition duration-300">
-              Déconnexion
-            </button>
-          </div>
-        </>
-      )}
+        )}
+      </div>
     </div>
   );
 };

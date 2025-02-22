@@ -44,13 +44,17 @@ const Login = () => {
       setError("MetaMask n'est pas installé. Veuillez l'installer pour continuer.");
       return;
     }
-
+  
     setLoading(true);
     const response = await loginWithMetaMask();
     setLoading(false);
-
+  
     if (response.address) {
-      navigate("/welcome");
+      if (response.newUser) {
+        navigate("/set-username", { state: { userId: response.userId } });
+      } else {
+        navigate("/welcome");
+      }
     } else {
       setError(response.error || "Erreur de connexion avec MetaMask !");
     }

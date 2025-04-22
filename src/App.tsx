@@ -12,7 +12,7 @@ import ProfilePage from './pages/ProfilePage';
 import DashboardPage from './pages/DashboardPage';
 import MarketplacePage from './pages/MarketplacePage';
 import ProductDetailPage from './pages/ProductDetailPage';
-import NotFoundPage from './pages/NotFoundPage';
+//import NotFoundPage from './pages/NotFoundPage';
 import LoginPage from './pages/LoginPage';
 import RegisterPage from './pages/RegisterPage';
 
@@ -24,8 +24,8 @@ export const supabase = createClient(supabaseUrl, supabaseAnonKey);
 function App() {
   return (
     <Router>
-      <AuthProvider>
-        <Web3Provider>
+      <Web3Provider> 
+        <AuthProvider>
           <VerificationProvider>
             <Toaster position="top-center" />
             <Routes>
@@ -38,12 +38,11 @@ function App() {
                 <Route path="product/:id" element={<ProductDetailPage />} />
                 <Route path="login" element={<LoginPage />} />
                 <Route path="register" element={<RegisterPage />} />
-                <Route path="*" element={<NotFoundPage />} />
               </Route>
             </Routes>
           </VerificationProvider>
-        </Web3Provider>
-      </AuthProvider>
+        </AuthProvider>
+      </Web3Provider>
     </Router>
   );
 }

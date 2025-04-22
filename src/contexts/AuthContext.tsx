@@ -81,8 +81,14 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
   const signIn = async (email: string, password: string) => {
     try {
       setLoading(true);
-      const { error } = await supabase.auth.signInWithPassword({ email, password });
+      
+      const { error } = await supabase.auth.signInWithPassword({
+        email: email.trim().toLowerCase(),
+        password
+      });
+  
       if (error) throw error;
+  
       toast.success('Signed in successfully');
     } catch (error: unknown) {
       if (error instanceof Error) {
@@ -95,28 +101,34 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
       setLoading(false);
     }
   };
+  
 
   const signUp = async (email: string, password: string, username: string) => {
     try {
       setLoading(true);
+  
       const { data, error } = await supabase.auth.signUp({ email, password });
-      
       if (error) throw error;
-      
-      // Create profile
-      if (data.user) {
-        const { error: profileError } = await supabase
-          .from('profiles')
-          .insert([{ 
-            user_id: data.user.id, 
-            username,
-            reputation: 0,
-            tokens_balance: 0
-          }]);
-          
-        if (profileError) throw profileError;
-      }
-      
+  
+      // Attendre que la session soit active
+      const { data: sessionData, error: sessionError } = await supabase.auth.getSession();
+      if (sessionError) throw sessionError;
+  
+      const currentUser = sessionData?.session?.user;
+      if (!currentUser) throw new Error("Session not found. Please try signing in.");
+  
+      const { error: profileError } = await supabase
+        .from('profiles')
+        .insert([{ 
+          id: currentUser.id,         // <- AJOUTER CECI
+          user_id: currentUser.id,
+          username,
+          reputation: 0,
+          tokens_balance: 0
+        }]);
+  
+      if (profileError) throw profileError;
+  
       toast.success('Account created successfully');
     } catch (error: unknown) {
       if (error instanceof Error) {
@@ -129,6 +141,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
       setLoading(false);
     }
   };
+  
 
   const signOut = async () => {
     try {

@@ -18,7 +18,30 @@ interface VerificationContextType {
     imageUrl: string, 
     productDetails: ProductDetails, 
     result: VerificationResult
+  ) => Promise<string | boolean>; // modifié pour retourner l'id si besoin
+  publishToMarketplace: (
+    verificationId: string,
+    userId: string,
+    title: string,
+    description: string,
+    price: number,
+    currency?: string,
+    acceptsCrypto?: boolean
   ) => Promise<boolean>;
+  getVerificationById: (id: string) => Promise<any>;
+  getUserVerifications: () => Promise<any[]>;
+}
+
+
+interface VerificationContextType {
+  isVerifying: boolean;
+  uploadImage: (file: File, productDetails: ProductDetails) => Promise<string | null>;
+  verifyProduct: (imageUrl: string, productDetails: ProductDetails) => Promise<VerificationResult | null>;
+  submitVerification: (
+    imageUrl: string, 
+  productDetails: ProductDetails, 
+  result: VerificationResult
+) => Promise<string | false>;
   getVerificationById: (id: string) => Promise<any>;
   getUserVerifications: () => Promise<any[]>;
 }
@@ -118,19 +141,49 @@ export const VerificationProvider: React.FC<{ children: React.ReactNode }> = ({ 
     }
   };
 
+  const publishToMarketplace = async (
+    verificationId: string,
+    userId: string,
+    title: string,
+    description: string,
+    price: number,
+    currency: string = 'USD',
+    acceptsCrypto: boolean = false
+  ) => {
+    const { error } = await supabase.from('marketplace').insert([
+      {
+        verification_id: verificationId,
+        seller_id: userId,
+        title,
+        description,
+        price,
+        currency,
+        accepts_crypto: acceptsCrypto,
+        status: 'active'
+      }
+    ]);
+  
+    if (error) {
+      console.error('Error publishing to marketplace:', error);
+      return false;
+    }
+  
+    return true;
+  };
+
   const submitVerification = async (
     imageUrl: string, 
     productDetails: ProductDetails, 
     result: VerificationResult
-  ): Promise<boolean> => {
+  ): Promise<string | false> => {
     if (!user || !profile) {
       toast.error('You must be logged in to submit verifications');
       return false;
     }
-
+  
     try {
-      // Save the verification to the database
-      const { error } = await supabase
+      // Insérer la vérification dans la base de données avec retour de la ligne
+      const { data, error } = await supabase
         .from('verifications')
         .insert([{
           user_id: user.id,
@@ -147,18 +200,19 @@ export const VerificationProvider: React.FC<{ children: React.ReactNode }> = ({ 
           features: result.features,
           suggested_price: result.suggestedPrice,
           status: 'completed'
-        }]);
-
+        }])
+        .select()
+        .single(); // ✅ Récupère la ligne insérée
+  
       if (error) throw error;
-      
-      // Award tokens based on verification
-      // This would interact with the smart contract in production
-      // For MVP, we'll update the user's token balance in the database
-      
-      // Calculate token reward based on result confidence
+  
+      const verificationId = data?.id;
+      if (!verificationId) throw new Error('Verification ID not returned');
+  
+      // Récompense en tokens (ex. : 1 token pour chaque tranche de 10% de confiance)
       const tokenReward = Math.floor(result.confidence / 10);
-      
-      // Update user's token balance
+  
+      // Mise à jour du profil utilisateur
       const { error: updateError } = await supabase
         .from('profiles')
         .update({ 
@@ -166,17 +220,18 @@ export const VerificationProvider: React.FC<{ children: React.ReactNode }> = ({ 
           verification_count: (profile.verification_count || 0) + 1
         })
         .eq('user_id', user.id);
-
+  
       if (updateError) throw updateError;
-      
+  
       toast.success(`Verification submitted successfully! Earned ${tokenReward} tokens.`);
-      return true;
+      return verificationId;
     } catch (error: any) {
       console.error('Error submitting verification:', error);
       toast.error(error.message || 'Error submitting verification');
       return false;
     }
   };
+  
 
   const getVerificationById = async (id: string): Promise<any> => {
     try {
@@ -225,6 +280,7 @@ export const VerificationProvider: React.FC<{ children: React.ReactNode }> = ({ 
     uploadImage,
     verifyProduct,
     submitVerification,
+    publishToMarketplace,
     getVerificationById,
     getUserVerifications
   };

@@ -1,6 +1,6 @@
 import React, { useEffect, useState } from 'react';
 import { Link } from 'react-router-dom';
-import { BarChart3, TrendingUp, CheckCircle, Award, Wallet, ArrowRight, Loader2 } from 'lucide-react';
+import { BarChart3, TrendingUp, CheckCircle, XCircle, Award, Wallet, ArrowRight, Loader2 } from 'lucide-react';
 import { useAuth } from '../contexts/AuthContext';
 import { useVerification } from '../contexts/VerificationContext';
 import { useWeb3 } from '../contexts/Web3Context';

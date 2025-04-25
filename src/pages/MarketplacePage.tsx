@@ -42,25 +42,25 @@ const MarketplacePage: React.FC = () => {
         setLoading(true);
         
         let query = supabase
-          .from('marketplace')
-          .select(`
-            *,
-            verification:verification_id (
-              image_url,
-              brand,
-              model,
-              category,
-              is_authentic,
-              confidence
-            ),
-            seller:seller_id (
-              profiles:user_id (
-                username,
-                reputation
-              )
-            )
-          `)
-          .eq('status', 'active');
+        .from('marketplace')
+        .select(`
+          *,
+          verification:verification_id (
+            image_url,
+            brand,
+            model,
+            category,
+            is_authentic,
+            confidence
+          ),
+          seller:seller_id (
+            username,
+            reputation
+          )
+        `)
+        .eq('status', 'active')
+        .not('verification', 'is', null); // ✅ Ajout
+      
           
         if (category !== 'all') {
           query = query.eq('verification.category', category);
@@ -83,9 +83,10 @@ const MarketplacePage: React.FC = () => {
           is_authentic: item.verification.is_authentic,
           confidence: item.verification.confidence,
           seller: {
-            username: item.seller.profiles.username,
-            reputation: item.seller.profiles.reputation
+            username: item.seller.username,
+            reputation: item.seller.reputation
           }
+                  
         }));
         
         setProducts(formattedProducts);

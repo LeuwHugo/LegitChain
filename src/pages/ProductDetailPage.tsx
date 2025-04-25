@@ -51,14 +51,12 @@ const ProductDetailPage: React.FC = () => {
           .select(`
             *,
             verification:verification_id (*),
-            seller:seller_id (
-              id,
-              profiles:user_id (
-                username, 
-                reputation
-              )
+            seller:profiles!marketplace_seller_id_fkey (
+              user_id,
+              username,
+              reputation
             )
-          `)
+          `)          
           .eq('id', id)
           .single();
           
@@ -92,10 +90,10 @@ const ProductDetailPage: React.FC = () => {
             suggested_price: data.verification.suggested_price
           },
           seller: {
-            id: data.seller.id,
-            username: data.seller.profiles.username,
-            reputation: data.seller.profiles.reputation
-          }
+            id: data.seller.user_id,
+            username: data.seller.username,
+            reputation: data.seller.reputation
+          }          
         };
         
         setProduct(formattedProduct);

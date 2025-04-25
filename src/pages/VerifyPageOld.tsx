@@ -24,11 +24,11 @@ interface VerificationResult {
 
 const VerifyPage: React.FC = () => {
   const { user, profile } = useAuth();
-  const { isVerifying, uploadImage, verifyProduct, submitVerification, publishToMarketplace } = useVerification();
+  const { isVerifying, uploadImage, verifyProduct, submitVerification } = useVerification();
   const { walletAddress, stakeTokens } = useWeb3();
   const navigate = useNavigate();
   
-  const [step, setStep] = useState(2); // ✅ On commence directement à l'étape des détails produit
+  const [step, setStep] = useState(1);
   const [selectedImage, setSelectedImage] = useState<File | null>(null);
   const [imagePreview, setImagePreview] = useState<string | null>(null);
   const [imageUrl, setImageUrl] = useState<string | null>(null);
@@ -43,6 +43,8 @@ const VerifyPage: React.FC = () => {
   });
   const [verificationResult, setVerificationResult] = useState<VerificationResult | null>(null);
   const [loading, setLoading] = useState(false);
+  const [stakingAmount, setStakingAmount] = useState('10');
+  const [staked, setStaked] = useState(false);
   
   const fileInputRef = useRef<HTMLInputElement>(null);
 
@@ -68,6 +70,18 @@ const VerifyPage: React.FC = () => {
     }));
   };
 
+  const handleStake = async () => {
+    setLoading(true);
+    try {
+      const success = await stakeTokens(stakingAmount);
+      if (success) {
+        setStaked(true);
+        setStep(2);
+      }
+    } finally {
+      setLoading(false);
+    }
+  };
 
   const handleUpload = async () => {
     if (!selectedImage || !productDetails.brand || !productDetails.model || !productDetails.category) {
@@ -104,31 +118,17 @@ const VerifyPage: React.FC = () => {
 
   const handleSubmit = async () => {
     if (!imageUrl || !verificationResult) return;
-  
+    
     setLoading(true);
     try {
-      const verificationId = await submitVerification(imageUrl, productDetails, verificationResult);
-      
-      if (verificationId && profile && productDetails.purchasePrice) {
-        const published = await publishToMarketplace(
-          verificationId,
-          profile.user_id,
-          `${productDetails.brand} ${productDetails.model}`,
-          productDetails.description || '',
-          productDetails.purchasePrice,
-          'USD',
-          true // accepte la crypto
-        );
-  
-        if (published) {
-          navigate('/marketplace');
-        }
+      const success = await submitVerification(imageUrl, productDetails, verificationResult);
+      if (success) {
+        navigate('/dashboard');
       }
     } finally {
       setLoading(false);
     }
   };
-  
 
   if (!user) {
     return (
@@ -155,21 +155,84 @@ const VerifyPage: React.FC = () => {
     <div className="container mx-auto px-4 py-12 max-w-3xl">
       <div className="bg-white rounded-xl shadow-md">
         <div className="border-b border-gray-200">
-        <div className="flex">
-  <div className={`flex-1 py-4 text-center ${step >= 2 ? 'text-purple-700 font-medium' : 'text-gray-500'}`}>
-    1. Product Details
-  </div>
-  <div className={`flex-1 py-4 text-center ${step >= 3 ? 'text-purple-700 font-medium' : 'text-gray-500'}`}>
-    2. Verification
-  </div>
-  <div className={`flex-1 py-4 text-center ${step >= 4 ? 'text-purple-700 font-medium' : 'text-gray-500'}`}>
-    3. Results
-  </div>
-</div>
-
+          <div className="flex">
+            <div className={`flex-1 py-4 text-center ${step >= 1 ? 'text-purple-700 font-medium' : 'text-gray-500'}`}>
+              1. Stake Tokens
+            </div>
+            <div className={`flex-1 py-4 text-center ${step >= 2 ? 'text-purple-700 font-medium' : 'text-gray-500'}`}>
+              2. Product Details
+            </div>
+            <div className={`flex-1 py-4 text-center ${step >= 3 ? 'text-purple-700 font-medium' : 'text-gray-500'}`}>
+              3. Verification
+            </div>
+            <div className={`flex-1 py-4 text-center ${step >= 4 ? 'text-purple-700 font-medium' : 'text-gray-500'}`}>
+              4. Results
+            </div>
+          </div>
         </div>
 
         <div className="p-8">
+          {step === 1 && (
+            <div>
+              <h2 className="text-2xl font-bold mb-6">Stake Tokens to Verify</h2>
+              <p className="text-gray-600 mb-6">
+                You need to stake some tokens to use the verification service. These tokens will be returned to you after the verification process, plus you'll earn additional rewards.
+              </p>
+              
+              {!walletAddress ? (
+                <div className="bg-yellow-50 border border-yellow-200 rounded-lg p-4 mb-6">
+                  <p className="text-yellow-700">
+                    You need to connect your wallet to stake tokens. Please connect your wallet from the profile settings.
+                  </p>
+                </div>
+              ) : (
+                <>
+                  <div className="mb-6">
+                    <label className="block text-gray-700 font-medium mb-2">
+                      Stake Amount (minimum 10 tokens)
+                    </label>
+                    <div className="flex">
+                      <input
+                        type="number"
+                        value={stakingAmount}
+                        onChange={(e) => setStakingAmount(e.target.value)}
+                        className="flex-1 rounded-l-lg border-gray-300 focus:ring-purple-500 focus:border-purple-500"
+                        min="10"
+                        step="1"
+                      />
+                      <span className="inline-flex items-center px-4 rounded-r-lg border border-l-0 border-gray-300 bg-gray-50 text-gray-500">
+                        Tokens
+                      </span>
+                    </div>
+                  </div>
+                
+                  <button
+                    onClick={handleStake}
+                    disabled={loading || staked}
+                    className={`w-full py-3 rounded-lg font-medium ${
+                      staked
+                        ? 'bg-green-100 text-green-700'
+                        : 'bg-purple-600 text-white hover:bg-purple-700'
+                    }`}
+                  >
+                    {loading ? (
+                      <span className="flex items-center justify-center">
+                        <Loader2 className="animate-spin mr-2 h-5 w-5" />
+                        Staking...
+                      </span>
+                    ) : staked ? (
+                      <span className="flex items-center justify-center">
+                        <CheckCircle className="mr-2 h-5 w-5" />
+                        Tokens Staked
+                      </span>
+                    ) : (
+                      'Stake Tokens'
+                    )}
+                  </button>
+                </>
+              )}
+            </div>
+          )}
 
           {step === 2 && (
             <div>

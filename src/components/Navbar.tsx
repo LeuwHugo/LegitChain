@@ -41,9 +41,13 @@ const Navbar: React.FC = () => {
             
             {/* Desktop Navigation */}
             <nav className="hidden md:ml-8 md:flex md:space-x-8">
-              <Link to="/" className="text-gray-700 hover:text-purple-700 px-3 py-2 rounded-md text-sm font-medium">
-                Home
-              </Link>
+            <Link
+              to={user ? "/dashboard" : "/"}
+              className="text-gray-700 hover:text-purple-700 px-3 py-2 rounded-md text-sm font-medium"
+            >
+              {user ? "Dashboard" : "Home"}
+            </Link>
+
               <Link to="/verify" className="text-gray-700 hover:text-purple-700 px-3 py-2 rounded-md text-sm font-medium">
                 Verify Product
               </Link>
@@ -145,9 +149,13 @@ const Navbar: React.FC = () => {
       {/* Mobile menu */}
       <div className={`md:hidden ${mobileMenuOpen ? 'block' : 'hidden'}`}>
         <div className="px-2 pt-2 pb-3 space-y-1 sm:px-3">
-          <Link to="/" className="block px-3 py-2 rounded-md text-base font-medium text-gray-700 hover:text-purple-700">
-            Home
-          </Link>
+        <Link
+          to={user ? "/dashboard" : "/"}
+          className="block px-3 py-2 rounded-md text-base font-medium text-gray-700 hover:text-purple-700"
+        >
+          {user ? "Dashboard" : "Home"}
+        </Link>
+
           <Link to="/verify" className="block px-3 py-2 rounded-md text-base font-medium text-gray-700 hover:text-purple-700">
             Verify Product
           </Link>

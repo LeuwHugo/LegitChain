@@ -1,6 +1,6 @@
 import React, { useEffect, useState } from 'react';
 import { Link } from 'react-router-dom';
-import { BarChart3, TrendingUp, CheckCircle, XCircle, Award, Wallet, ArrowRight, Loader2 } from 'lucide-react';
+import { BarChart3, TrendingUp, CheckCircle, XCircle, Award, Wallet, ArrowRight } from 'lucide-react';
 import { useAuth } from '../contexts/AuthContext';
 import { useVerification } from '../contexts/VerificationContext';
 import { useWeb3 } from '../contexts/Web3Context';
@@ -9,8 +9,7 @@ const DashboardPage: React.FC = () => {
   const { user, profile } = useAuth();
   const { getUserVerifications } = useVerification();
   const { walletAddress, getTokenBalance } = useWeb3();
-  
-  const [verifications, setVerifications] = useState<any[]>([]);
+  const [, setVerifications] = useState<{ id: string; is_authentic: boolean; confidence: number; brand: string; model: string; created_at: string }[]>([]);
   const [loading, setLoading] = useState(true);
   const [tokenBalance, setTokenBalance] = useState('0');
   const [stats, setStats] = useState({
@@ -18,7 +17,7 @@ const DashboardPage: React.FC = () => {
     authenticCount: 0,
     fakeCount: 0,
     averageConfidence: 0,
-    recentVerifications: [] as any[],
+    recentVerifications: [] as { id: string; is_authentic: boolean; confidence: number; brand: string; model: string; created_at: string }[],
     earnedTokens: 0
   });
 
@@ -63,7 +62,14 @@ const DashboardPage: React.FC = () => {
     loadData();
   }, [user, profile, walletAddress]);
 
-  if (!user) {
+   // 🔥 AJOUTE ICI :
+   const authenticRate = stats.totalVerifications > 0 
+   ? Math.round((stats.authenticCount / stats.totalVerifications) * 100) 
+   : 0;
+ const fakeRate = 100 - authenticRate;
+
+  if (!user) 
+    {
     return (
       <div className="container mx-auto px-4 py-12">
         <div className="text-center">
@@ -200,17 +206,11 @@ const DashboardPage: React.FC = () => {
           <div className="grid grid-cols-2 gap-4">
             <div className="bg-green-50 rounded-lg p-4">
               <p className="text-sm text-gray-600 mb-1">Authentic Rate</p>
-              <p className="text-xl font-bold text-green-700">
-                {stats.totalVerifications ? 
-                  Math.round((stats.authenticCount / stats.totalVerifications) * 100) : 0}%
-              </p>
+              <p className="text-xl font-bold text-green-700">{authenticRate}%</p>
             </div>
             <div className="bg-red-50 rounded-lg p-4">
               <p className="text-sm text-gray-600 mb-1">Fake Rate</p>
-              <p className="text-xl font-bold text-red-700">
-                {stats.totalVerifications ? 
-                  Math.round((stats.fakeCount / stats.totalVerifications) * 100) : 0}%
-              </p>
+              <p className="text-xl font-bold text-red-700">{fakeRate}%</p>
             </div>
           </div>
         </div>
